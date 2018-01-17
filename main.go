@@ -33,7 +33,7 @@ func Size(size int64) string {
 	}
 }
 
-func myReadDirWithFiles(path string, qwe *string, vloj int, aaa []bool) {
+func myReadDirWithFiles(path string, out *os.File, vloj int, aaa []bool) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		panic(err)
@@ -45,41 +45,41 @@ func myReadDirWithFiles(path string, qwe *string, vloj int, aaa []bool) {
 			if i == rng {
 				aaa[vloj] = false
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "└───" + file.Name() + "\n"
-					myReadDirWithFiles(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + "\n")
+					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
 				} else {
-					*qwe += "└───" + file.Name() + "\n"
-					myReadDirWithFiles(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString("└───" + file.Name() + "\n")
+					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
 				}
 			} else {
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "├───" + file.Name() + "\n"
-					myReadDirWithFiles(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + "\n")
+					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
 				} else {
-					*qwe += "├───" + file.Name() + "\n"
-					myReadDirWithFiles(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString("├───" + file.Name() + "\n")
+					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
 				}
 			}
 		} else {
 			if i == rng {
 				aaa[vloj] = false
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "└───" + file.Name() + Size(file.Size()) + "\n"
+					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + Size(file.Size()) + "\n")
 				} else {
-					*qwe += "└───" + file.Name() + Size(file.Size()) + "\n"
+					out.WriteString("└───" + file.Name() + Size(file.Size()) + "\n")
 				}
 			} else {
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "├───" + file.Name() + Size(file.Size()) + "\n"
+					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + Size(file.Size()) + "\n")
 				} else {
-					*qwe += "├───" + file.Name() + Size(file.Size()) + "\n"
+					out.WriteString("├───" + file.Name() + Size(file.Size()) + "\n")
 				}
 			}
 		}
 	}
 }
 
-func myReadDir(path string, qwe *string, vloj int, aaa []bool) {
+func myReadDir(path string, out *os.File, vloj int, aaa []bool) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		panic(err)
@@ -97,19 +97,19 @@ func myReadDir(path string, qwe *string, vloj int, aaa []bool) {
 			if i == rng {
 				aaa[vloj] = false
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "└───" + file.Name() + "\n"
-					myReadDir(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + "\n")
+					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
 				} else {
-					*qwe += "└───" + file.Name() + "\n"
-					myReadDir(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString("└───" + file.Name() + "\n")
+					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
 				}
 			} else {
 				if vloj != 0 {
-					*qwe += tabs(vloj, aaa) + "├───" + file.Name() + "\n"
-					myReadDir(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + "\n")
+					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
 				} else {
-					*qwe += "├───" + file.Name() + "\n"
-					myReadDir(path+"/"+file.Name(), qwe, vloj+1, aaa)
+					out.WriteString("├───" + file.Name() + "\n")
+					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
 				}
 			}
 			i++
@@ -121,9 +121,9 @@ func dirTree(out *os.File, path string, printFiles bool) error {
 	var str string
 	var aaa = make([]bool, 0, 10)
 	if printFiles {
-		myReadDirWithFiles(path, &str, 0, aaa)
+		myReadDirWithFiles(path, out, 0, aaa)
 	} else {
-		myReadDir(path, &str, 0, aaa)
+		myReadDir(path, out, 0, aaa)
 	}
 	out.WriteString(str)
 	return nil
