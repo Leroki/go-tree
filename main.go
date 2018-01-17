@@ -12,12 +12,15 @@ func tabs(rep int, aaa []bool) string {
 		for i := 0; i < rep; i++ {
 			if aaa[i] {
 				ret += "│" + "   "
+				//ret += "│" + "\t"
 			} else {
 				ret += "    "
+				//ret += "\t"
 			}
 		}
 	} else {
 		ret += "│" + "   "
+		//ret += "│" + "\t"
 	}
 	return ret
 }
