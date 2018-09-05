@@ -1,28 +1,24 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
-func tabs(rep int, aaa []bool) string {
-	var ret string
-	if rep != 0 {
-		for i := 0; i < rep; i++ {
-			if aaa[i] {
-				ret += "│" + "   "
-				//ret += "│" + "\t"
-			} else {
-				ret += "    "
-				//ret += "\t"
-			}
+func tabs(deep int, tabsType []bool) string {
+	var res string
+	for i := 0; i < deep; i++ {
+		if tabsType[i] {
+			res += "    "
+		} else {
+			res += "│" + "   "
 		}
-	} else {
-		ret += "│" + "   "
-		//ret += "│" + "\t"
 	}
-	return ret
+
+	return res
 }
 
 func Size(size int64) string {
@@ -33,110 +29,103 @@ func Size(size int64) string {
 	}
 }
 
-func myReadDirWithFiles(path string, out *os.File, vloj int, aaa []bool) {
+func myReadDirWithFiles(path string, out *os.File, deep int, tabsType *[]bool) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
-	rng := len(files) - 1
-	aaa = append(aaa, true)
+
+	if deep >= len(*tabsType) {
+		*tabsType = append(*tabsType, false)
+	}
+
 	for i, file := range files {
 		if file.IsDir() {
-			if i == rng {
-				aaa[vloj] = false
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + "\n")
-					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
-				} else {
-					out.WriteString("└───" + file.Name() + "\n")
-					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
-				}
+			if (i + 1) == len(files) {
+				(*tabsType)[deep] = true
+				out.WriteString(tabs(deep, *tabsType) + "└── " + file.Name() + "/\n")
+				myReadDirWithFiles(path+"/"+file.Name(), out, deep+1, tabsType)
 			} else {
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + "\n")
-					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
-				} else {
-					out.WriteString("├───" + file.Name() + "\n")
-					myReadDirWithFiles(path+"/"+file.Name(), out, vloj+1, aaa)
-				}
+				(*tabsType)[deep] = false
+				out.WriteString(tabs(deep, *tabsType) + "├── " + file.Name() + "/\n")
+				myReadDirWithFiles(path+"/"+file.Name(), out, deep+1, tabsType)
 			}
 		} else {
-			if i == rng {
-				aaa[vloj] = false
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + Size(file.Size()) + "\n")
-				} else {
-					out.WriteString("└───" + file.Name() + Size(file.Size()) + "\n")
-				}
+			if (i + 1) == len(files) {
+				(*tabsType)[deep] = true
+				out.WriteString(tabs(deep, *tabsType) + "└── " + file.Name() + Size(file.Size()) + "\n")
 			} else {
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + Size(file.Size()) + "\n")
-				} else {
-					out.WriteString("├───" + file.Name() + Size(file.Size()) + "\n")
-				}
+				(*tabsType)[deep] = false
+				out.WriteString(tabs(deep, *tabsType) + "├── " + file.Name() + Size(file.Size()) + "\n")
 			}
 		}
 	}
 }
 
-func myReadDir(path string, out *os.File, vloj int, aaa []bool) {
+func myReadDir(path string, out *os.File, deep int, tabsType *[]bool) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
-	rng := -1
+
+	dirsIndex := make([]os.FileInfo, 0)
 	for _, v := range files {
 		if v.IsDir() {
-			rng++
+			dirsIndex = append(dirsIndex, v)
 		}
 	}
-	i := 0
-	aaa = append(aaa, true)
-	for _, file := range files {
-		if file.IsDir() {
-			if i == rng {
-				aaa[vloj] = false
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "└───" + file.Name() + "\n")
-					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
-				} else {
-					out.WriteString("└───" + file.Name() + "\n")
-					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
-				}
-			} else {
-				if vloj != 0 {
-					out.WriteString(tabs(vloj, aaa) + "├───" + file.Name() + "\n")
-					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
-				} else {
-					out.WriteString("├───" + file.Name() + "\n")
-					myReadDir(path+"/"+file.Name(), out, vloj+1, aaa)
-				}
-			}
-			i++
+
+	if deep >= len(*tabsType) {
+		*tabsType = append(*tabsType, false)
+	}
+
+	for i, file := range dirsIndex {
+		if (i + 1) == len(dirsIndex) {
+			(*tabsType)[deep] = true
+			out.WriteString(tabs(deep, *tabsType) + "└── " + file.Name() + "/\n")
+			myReadDir(path+"/"+file.Name(), out, deep+1, tabsType)
+		} else {
+			(*tabsType)[deep] = false
+			out.WriteString(tabs(deep, *tabsType) + "├── " + file.Name() + "/\n")
+			myReadDir(path+"/"+file.Name(), out, deep+1, tabsType)
 		}
 	}
 }
 
 func dirTree(out *os.File, path string, printFiles bool) error {
-	var str string
-	var aaa = make([]bool, 0, 10)
+	start := strings.Replace(path+"/\n", "//", "/", 1)
+	out.WriteString(start)
+
+	var tabsType = make([]bool, 0)
 	if printFiles {
-		myReadDirWithFiles(path, out, 0, aaa)
+		myReadDirWithFiles(path, out, 0, &tabsType)
 	} else {
-		myReadDir(path, out, 0, aaa)
+		myReadDir(path, out, 0, &tabsType)
 	}
-	out.WriteString(str)
+	fmt.Println(len(tabsType))
 	return nil
 }
 
 func main() {
+	var path string
+
 	out := os.Stdout
-	if !(len(os.Args) == 2 || len(os.Args) == 3) {
-		panic("usage go run main.go . [-f]")
+	defer out.Close()
+
+	printFiles := flag.Bool("f", false, "Print files")
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) > 1 {
+		out.WriteString("Too many path's...\n")
+		return
+	} else if len(args) == 1 {
+		path = args[0]
+	} else {
+		path = "."
 	}
-	path := os.Args[1]
-	printFiles := len(os.Args) == 3 && os.Args[2] == "-f"
-	err := dirTree(out, path, printFiles)
+
+	err := dirTree(out, path, *printFiles)
 	if err != nil {
 		panic(err.Error())
 	}
