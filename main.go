@@ -102,7 +102,6 @@ func dirTree(out *os.File, path string, printFiles bool) error {
 	} else {
 		myReadDir(path, out, 0, &tabsType)
 	}
-	fmt.Println(len(tabsType))
 	return nil
 }
 
